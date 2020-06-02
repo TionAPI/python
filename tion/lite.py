@@ -63,29 +63,53 @@ class Lite(tion, ABC):
 
         def decode_data(data: bytearray):
             _LOGGER.debug("Data is %s", bytes(data).hex())
-            self._fw_version = "{:02x}{:02x}".format(data[17], data[16])
 
-            self._heater_temp = data[3]
-            self._fan_speed = data[4]
-            self._in_temp = data[5]
-            self._filter_remain = int.from_bytes(data[16:19], byteorder='big', signed=False) / 86400 #days
-            self._filter_remain = self._filter_remain * 100 / 180 # percents
             self._status = self._process_status(data[0] & 1)
             self._sound = self._process_status(data[0] >> 1 & 1)
             self._light = self._process_status(data[0] >> 2 & 1)
-            self._have_heater = self._process_status(data[0] >> 7 & 1)
+            self._filter_change_required = self._process_status(data[0] >> 4 & 1)
+            self._co2_auto_control = self._process_status(data[0] >> 5 & 1)
             self._heater = self._process_status(data[0] >> 6 & 1)
+            self._have_heater = self._process_status(data[0] >> 7 & 1)
 
-            _LOGGER.info("FW version is %s", self._fw_version)
-            _LOGGER.info("heater temperature is %d", self._heater_temp)
-            _LOGGER.info("fan sped is %d", self._fan_speed)
-            _LOGGER.info("in temp is %d", self._in_temp)
-            _LOGGER.info("filter_remain %d%%", self._filter_remain)
+            self._air_mode = data[2]
+            self._heater_temp = data[3]
+            self._fan_speed = data[4]
+            self._in_temp = data[5]
+            self._out_temp = data[6]
+            self._electronic_temp  = data[7]
+            self._electronic_work_time = int.from_bytes(data[8:11], byteorder='big', signed=False) / 86400  # ??? days
+            self._filter_remain = int.from_bytes(data[16:19], byteorder='big', signed=False) / 86400    # ??? days
+            self._filter_remain = self._filter_remain * 100 / 180 # percents
+            self._device_work_time = int.from_bytes(data[20:23], byteorder='big', signed=False) / 86400     # ??? days
+            self._error_code = data[28]
+
+            self._preset_temp = data[48:50]
+            self._preset_fan = data[51:53]
+            self._max_fan = data[54]
+            self._heater_percent = data[55]
+
             _LOGGER.info("status is %s", self._status)
             _LOGGER.info("sound is %s", self._sound)
             _LOGGER.info("light is %s", self._light)
+            _LOGGER.info("filter change required is %s", self._filter_change_required)
+            _LOGGER.info("co2 auto control is %s", self._co2_auto_control)
             _LOGGER.info("have_heater is %s", self._have_heater)
             _LOGGER.info("heater is %s", self._heater)
+
+            _LOGGER.info("air mode %d", self._air_mode)
+            _LOGGER.info("heater temperature is %d", self._heater_temp)
+            _LOGGER.info("fan sped is %d", self._fan_speed)
+            _LOGGER.info("in temp is %d", self._in_temp)
+            _LOGGER.info("out temp is %d", self._out_temp)
+            _LOGGER.info("electronic temp is %d", self._electronic_temp)
+            _LOGGER.info("electronic work time is %s", self._electronic_work_time)
+            _LOGGER.info("filter_remain %d%%", self._filter_remain)
+            _LOGGER.info("device work time is %s", self._device_work_time)
+
+            _LOGGER.info("error code is %d", self._error_code)
+
+
 
         if package[0] == self.FIRST_PACKET_ID or package[0] == self.SINGLE_PACKET_ID:
             self._data = package
@@ -132,10 +156,16 @@ class Lite(tion, ABC):
                 self.REQUEST_DEVICE_INFO + list(self._sent_request_id) +
                 [0x3c, 0x9f, 0xe9] + self.CRC)
 
+        #       8010003a 29 0940    (3ff8cd0d) 11a1a5c1 bbaa
+        #       8010003a 36 0940    (004b7b6e) 50252e6d bbaa
+        #       8010003a 4d 0940    (3874cb83) 52128f6d bbaa
+        #       8010003a 02 0940    (922f3b7c) ba3c9fe9 bbaa
+
         def create_request_params_command() -> bytearray:
             generate_request_id()
+            PACKET_SIZE = 0x10 # 17 bytes
             return bytearray(
-                [self.SINGLE_PACKET_ID, 0x10, 0x00, self.MAGIC_NUMBER, 0x02] +
+                [self.SINGLE_PACKET_ID, PACKET_SIZE, 0x00, self.MAGIC_NUMBER, 0x02] +
                 self.REQUEST_PARAMS + list(self._sent_request_id) +
                 [0x48, 0xd3, 0xc3, 0x1a] + self.CRC)
             #dumps:
