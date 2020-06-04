@@ -11,6 +11,7 @@ import time
 
 _LOGGER = logging.getLogger(__name__)
 
+
 class s3(tion):
     uuid = "6e400001-b5a3-f393-e0a9-e50e24dcca9e"
     uuid_write = "6e400002-b5a3-f393-e0a9-e50e24dcca9e"
@@ -29,14 +30,13 @@ class s3(tion):
     command_SET_PARAMS = 2
 
     def __init__(self, mac: str):
-        self._btle = btle.Peripheral(None)
-        self._mac = mac
+        super().__init__(mac)
 
     def __try_get_state(self) -> bytearray:
         return self._btle.getServiceByUUID(self.uuid).getCharacteristics()[0].read()
 
     def pair(self):
-        def get_pair_command(self) -> bytearray:
+        def get_pair_command() -> bytearray:
             return self.create_command(self.command_PAIR)
 
         self._btle.connect(self.mac, btle.ADDR_TYPE_RANDOM)

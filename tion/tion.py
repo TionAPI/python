@@ -2,7 +2,10 @@ import abc
 import logging
 from typing import Callable
 
+from bluepy import btle
+
 _LOGGER = logging.getLogger(__name__)
+
 
 class TionException(Exception):
     def __init__(self, expression, message):
@@ -17,6 +20,7 @@ class tion:
 
     def __init__(self, mac: str):
         self._mac = mac
+        self._btle: btle.Peripheral = btle.Peripheral(None)
 
     @abc.abstractmethod
     def _send_request(self, request: bytearray) -> bytearray:
