@@ -43,6 +43,7 @@ class Lite(tion):
         self._header: bytearray = bytearray()
         self._fw_version: str = ""
         self._mac = mac
+        self._got_new_sequence = False
         if mac == "dummy":
             _LOGGER.info("Dummy mode!")
             self._package_id: int = 0
@@ -115,16 +116,26 @@ class Lite(tion):
         if package[0] == self.FIRST_PACKET_ID or package[0] == self.SINGLE_PACKET_ID:
             self._data = package
             self._have_full_package = True if package[0] == self.SINGLE_PACKET_ID else False
+            self._got_new_sequence = True if package[0] == self.FIRST_PACKET_ID else False
 
         elif package[0] == self.MIDDLE_PACKET_ID:
             self._have_full_package = False
-            list(package).pop(0)
-            self._data += package
+            if not self._got_new_sequence:
+                _LOGGER.debug("Got middle packet but waiting for a first!")
+            else:
+                self._have_full_package = False
+                list(package).pop(0)
+                self._data += package
         elif package[0] == self.END_PACKET_ID:
-            self._have_full_package = True
-            list(package).pop(0)
-            self._data += package
-            self._crc = package[len(package) - 1] + package[len(package) - 2]
+            if not self._got_new_sequence:
+                self._have_full_package = False
+                _LOGGER.debug("Got end packet but waiting for a first!")
+            else:
+                self._have_full_package = True
+                list(package).pop(0)
+                self._data += package
+                self._crc = package[len(package) - 1] + package[len(package) - 2]
+                self._got_new_sequence = False
         else:
             _LOGGER.error("Unknown pocket id %s", hex(package[0]))
 
