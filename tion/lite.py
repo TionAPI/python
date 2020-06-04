@@ -122,7 +122,7 @@ class Lite(tion):
             self._data += package
         elif package[0] == self.END_PACKET_ID:
             self._have_full_package = True
-            package.pop(0)
+            list(package).pop(0)
             self._data += package
             self._crc = package[len(package) - 1] + package[len(package) - 2]
         else:
