@@ -1,4 +1,5 @@
 import logging
+from bluepy import btle
 from abc import ABC
 
 if __package__ == "":
@@ -10,14 +11,14 @@ logging.basicConfig(level=logging.DEBUG)
 _LOGGER = logging.getLogger(__name__)
 _LOGGER.setLevel("DEBUG")
 
-class Lite(tion, ABC):
+
+class Lite(tion):
     uuid: str = "98f00001-3788-83ea-453e-f52244709ddb"
     uuid_write: str = "98f00002-3788-83ea-453e-f52244709ddb"
     uuid_notify: str = "98f00003-3788-83ea-453e-f52244709ddb"
     uuid_notify_descriptor: str = "00002902-0000-1000-8000-00805f9b34fb"
     write: None
     notify: None
-    _btle: None
     MAGIC_NUMBER: int = 0x3a  # 58
     CRC = [0xbb, 0xaa]
 
@@ -27,13 +28,15 @@ class Lite(tion, ABC):
     END_PACKET_ID = 0xc0
     REQUEST_DEVICE_INFO = [0x09, MIDDLE_PACKET_ID]
     REQUEST_PARAMS = [0x32, 0x12]
+    SET_PARAMS = [0x30, 0x12]
 
     def __init__(self, mac: str):
+        super().__init__(mac)
 
         self._data: bytearray = bytearray()
-        self._package_size: bytearray = 0
-        self._command_type: bytearray = 0
-        self._request_id: bytearray = 0
+        self._package_size: bytearray = bytearray()
+        self._command_type: bytearray = bytearray()
+        self._request_id: bytearray = bytearray()
         self._sent_request_id: bytearray = bytearray()
         self._crc: bytearray = bytearray()
         self._have_full_package = False
@@ -109,8 +112,6 @@ class Lite(tion, ABC):
 
             _LOGGER.info("error code is %d", self._error_code)
 
-
-
         if package[0] == self.FIRST_PACKET_ID or package[0] == self.SINGLE_PACKET_ID:
             self._data = package
             self._have_full_package = True if package[0] == self.SINGLE_PACKET_ID else False
@@ -160,7 +161,7 @@ class Lite(tion, ABC):
         #       8010003a 36 0940    (004b7b6e) 50252e6d bbaa
         #       8010003a 4d 0940    (3874cb83) 52128f6d bbaa
         #       8010003a 02 0940    (922f3b7c) ba3c9fe9 bbaa
-
+        #                                      ^^^^^^^^ -- command number
         def create_request_params_command() -> bytearray:
             generate_request_id()
             PACKET_SIZE = 0x10 # 17 bytes
