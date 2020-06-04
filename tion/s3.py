@@ -80,6 +80,7 @@ class s3(tion):
 
         try:
             self._do_action(self._connect)
+            self.notify.read()
             self._do_action(self.__try_write, request=get_status_command())
             byte_response = self._do_action(self.__try_get_state)
         except TionException as e:
@@ -115,6 +116,7 @@ class s3(tion):
             return new_settings
         try:
             self._do_action(self._connect)
+            self.notify.read()
             self._do_action(self._try_write, request=encode_request(request))
         except TionException as e:
             _LOGGER.error(str(e))

@@ -113,7 +113,7 @@ class tion:
                 if tc.uuid == self.uuid_write:
                     self.write = tc
 
-        self.notify.read()
+
 
     def _try_write(self, request: bytearray):
         if self.mac != "dummy":
