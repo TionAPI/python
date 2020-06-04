@@ -118,7 +118,7 @@ class Lite(tion):
 
         elif package[0] == self.MIDDLE_PACKET_ID:
             self._have_full_package = False
-            package.pop(0)
+            list(package).pop(0)
             self._data += package
         elif package[0] == self.END_PACKET_ID:
             self._have_full_package = True
