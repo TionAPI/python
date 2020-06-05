@@ -113,6 +113,8 @@ class Lite(tion):
 
             _LOGGER.info("error code is %d", self._error_code)
 
+        _LOGGER.debug("Got %s from tion", bytes(package).hex())
+
         if package[0] == self.FIRST_PACKET_ID or package[0] == self.SINGLE_PACKET_ID:
             self._data = package
             self._have_full_package = True if package[0] == self.SINGLE_PACKET_ID else False
