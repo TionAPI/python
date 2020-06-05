@@ -113,10 +113,9 @@ class tion:
                 if tc.uuid == self.uuid_write:
                     self.write = tc
 
-
-
     def _try_write(self, request: bytearray):
         if self.mac != "dummy":
+            _LOGGER.debug("Writing %s to %s", bytes(request).hex(), self.write.uuid())
             return self.write.write(request)
         else:
             _LOGGER.info("Dummy write")
