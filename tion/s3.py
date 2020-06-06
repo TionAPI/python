@@ -33,7 +33,9 @@ class s3(tion):
         super().__init__(mac)
 
     def __try_get_state(self) -> bytearray:
-        return self._btle.getServiceByUUID(self.uuid).getCharacteristics()[0].read()
+        response = self._btle.getServiceByUUID(self.uuid).getCharacteristics()[0].read()
+        _LOGGER.debug("Response is %s", bytes(response).hex())
+        return response
 
     def pair(self):
         def get_pair_command() -> bytearray:
@@ -81,13 +83,14 @@ class s3(tion):
         try:
             self._do_action(self._connect)
             self.notify.read()
-            self._do_action(self.__try_write, request=get_status_command())
+            self._do_action(self._try_write, request=get_status_command())
             byte_response = self._do_action(self.__try_get_state)
         except TionException as e:
             _LOGGER.error(str(e))
         finally:
             if not keep_connection:
-                self._btle.disconnect()
+                if self.mac != "dummy":
+                    self._btle.disconnect()
 
         return decode_response(byte_response)
 
