@@ -116,8 +116,8 @@ class s3(tion):
 
             settings = {**self.get(True), **request}
             new_settings = self.create_command(self.command_SET_PARAMS)
-            new_settings[2] = settings["fan_speed"]
-            new_settings[3] = settings["heater_temp"]
+            new_settings[2] = int(settings["fan_speed"])
+            new_settings[3] = int(settings["heater_temp"])
             new_settings[4] = encode_mode(settings["mode"])
             new_settings[5] = encode_status(settings["heater"]) | (encode_status(settings["status"]) << 1) | (
                         encode_status(settings["sound"]) << 3)
