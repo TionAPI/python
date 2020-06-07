@@ -66,15 +66,17 @@ class s3(tion):
             result = {}
             try:
                 result = {"code": 200,
+                          "mode": process_mode(int(list("{:02x}".format(response[2]))[0])),
+                          "fan_speed": int(list("{:02x}".format(response[2]))[1]),
+                          "heater_temp": response[3],
                           "heater": self._process_status(response[4] & 1),
                           "status": self._process_status(response[4] >> 1 & 1),
                           "sound": self._process_status(response[4] >> 3 & 1),
-                          "mode": process_mode(int(list("{:02x}".format(response[2]))[0])),
-                          "fan_speed": int(list("{:02x}".format(response[2]))[1]), "heater_temp": response[3],
-                          "in_temp": self.decode_temperature(response[8]),
                           "out_temp": self.decode_temperature(response[7]),
+                          "in_temp": self.decode_temperature(response[8]),
                           "filter_remain": response[10] * 256 + response[9],
-                          "time": "{}:{}".format(response[11], response[12]), "request_error_code": response[13],
+                          "time": "{}:{}".format(response[11], response[12]),
+                          "request_error_code": response[13],
                           "fw_version": "{:02x}{:02x}".format(response[16], response[17])}
 
                 if result["heater"] == "off":
