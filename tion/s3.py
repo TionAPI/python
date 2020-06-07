@@ -77,7 +77,7 @@ class s3(tion):
                           "filter_remain": response[10] * 256 + response[9],
                           "time": "{}:{}".format(response[11], response[12]),
                           "request_error_code": response[13],
-                          "fw_version": "{:02x}{:02x}".format(response[16], response[17])}
+                          "fw_version": "{:02x}{:02x}".format(response[18], response[17])}
 
                 if result["heater"] == "off":
                     result["is_heating"] = "off"
