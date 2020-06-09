@@ -13,18 +13,20 @@ class TionDelegation(DefaultDelegate):
         self._data = None
         DefaultDelegate.__init__(self)
 
-    def handleNotification(self, cHandle, data):
+    def handleNotification(self, handle: int, data: bytes):
         self._data = data
-        _LOGGER.debug("%s", data)
+        _LOGGER.debug("Got data in %d response %s", handle, bytes(data).hex())
 
     def handleDiscovery(self, dev, isNewDev, isNewData):
         if isNewDev:
             _LOGGER.debug("Discovered device %s", dev.addr)
         elif isNewData:
             _LOGGER.debug("Received new data from %s", dev.addr)
+
     @property
-    def data(self):
+    def data(self) -> bytes:
         return self._data
+
 
 class TionException(Exception):
     def __init__(self, expression, message):
