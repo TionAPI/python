@@ -3,9 +3,28 @@ import logging
 from typing import Callable
 
 from bluepy import btle
+from bluepy.btle import DefaultDelegate
 
 _LOGGER = logging.getLogger(__name__)
 
+
+class TionDelegation(DefaultDelegate):
+    def __init__(self):
+        self._data = None
+        DefaultDelegate.__init__(self)
+
+    def handleNotification(self, cHandle, data):
+        self._data = data
+        _LOGGER.debug("%s", data)
+
+    def handleDiscovery(self, dev, isNewDev, isNewData):
+        if isNewDev:
+            _LOGGER.debug("Discovered device %s", dev.addr)
+        elif isNewData:
+            _LOGGER.debug("Received new data from %s", dev.addr)
+    @property
+    def data(self):
+        return self._data
 
 class TionException(Exception):
     def __init__(self, expression, message):
@@ -21,6 +40,7 @@ class tion:
     def __init__(self, mac: str):
         self._mac = mac
         self._btle: btle.Peripheral = btle.Peripheral(None)
+        self._delegation = TionDelegation()
 
     @abc.abstractmethod
     def _send_request(self, request: bytearray) -> bytearray:
@@ -148,3 +168,17 @@ class tion:
             raise TionException(action.__name__, message)
 
         return response
+
+    def _enable_notifications(self):
+        _LOGGER.debug("Enabling notification")
+        setup_data = b"\x01\x00"
+
+        _LOGGER.debug("Notify handler is %s", self.notify.getHandle())
+        notify_handle = self.notify.getHandle() + 1
+
+        _LOGGER.debug("Will write %s to %s handle", setup_data, notify_handle)
+        result = self._btle.writeCharacteristic(notify_handle, setup_data, withResponse=True)
+        _LOGGER.debug("Result is %s", result)
+        self._btle.withDelegate(self._delegation)
+        self.notify.read()
+        return result

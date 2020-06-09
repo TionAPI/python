@@ -95,10 +95,20 @@ class s3(tion):
 
         try:
             self._do_action(self._connect)
-            self.notify.read()
+            self._enable_notifications()
             self._do_action(self._try_write, request=get_status_command())
-            byte_response = self._do_action(self.__try_get_state)
-            result = decode_response(byte_response)
+
+            i = 0
+            while i < 10:
+                if self._btle.waitForNotifications(1.0):
+                    byte_response = self._delegation.data
+                    result = decode_response(byte_response)
+                    break
+                i += 1
+            else:
+                _LOGGER.debug("Waiting too long for data")
+                self.notify.read()
+
         except TionException as e:
             _LOGGER.error(str(e))
             result = {"code": 400, "error": "Got exception " + str(e)}
@@ -134,7 +144,6 @@ class s3(tion):
             return new_settings
         try:
             self._do_action(self._connect)
-            self.notify.read()
             self._do_action(self._try_write, request=encode_request(request))
         except TionException as e:
             _LOGGER.error(str(e))
