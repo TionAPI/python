@@ -81,11 +81,11 @@ class Lite(tion):
             self._fan_speed = data[4]
             self._in_temp = data[5]
             self._out_temp = data[6]
-            self._electronic_temp  = data[7]
+            self._electronic_temp = data[7]
             self._electronic_work_time = int.from_bytes(data[8:11], byteorder='big', signed=False) / 86400  # ??? days
-            self._filter_remain = int.from_bytes(data[16:19], byteorder='big', signed=False) / 86400    # ??? days
-            self._filter_remain = self._filter_remain * 100 / 180 # percents
-            self._device_work_time = int.from_bytes(data[20:23], byteorder='big', signed=False) / 86400     # ??? days
+            self._filter_used = int.from_bytes(data[16:20], byteorder='big', signed=False) / 86400    # ??? days
+            self._filter_used = self._filter_used * 100 / 180  # percents
+            self._device_work_time = int.from_bytes(data[20:24], byteorder='big', signed=False) / 86400     # ??? days
             self._error_code = data[28]
 
             self._preset_temp = data[48:50]
@@ -108,7 +108,7 @@ class Lite(tion):
             _LOGGER.info("out temp is %d", self._out_temp)
             _LOGGER.info("electronic temp is %d", self._electronic_temp)
             _LOGGER.info("electronic work time is %s", self._electronic_work_time)
-            _LOGGER.info("filter_remain %d%%", self._filter_remain)
+            _LOGGER.info("filter_used %.1f%%", self._filter_used)
             _LOGGER.info("device work time is %s", self._device_work_time)
 
             _LOGGER.info("error code is %d", self._error_code)
