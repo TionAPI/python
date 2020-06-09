@@ -193,10 +193,27 @@ class Lite(tion):
 
         try:
             self._do_action(self._connect)
+            self._enable_notifications()
             self._do_action(self._try_write, request=create_request_params_command())
             _LOGGER.debug("Collecting data")
-            while not self.collect_command(self.__try_get_state()):
-                pass
+
+            i = 0
+            while i < 10:
+                if self.mac == "dummy":
+                    while not self.collect_command(self.__try_get_state()):
+                        pass
+                    else:
+                        break
+                else:
+                    if self._btle.waitForNotifications(1.0):
+                        byte_response = self._delegation.data
+                        if self.collect_command(byte_response):
+                            break
+                    i += 1
+            else:
+                _LOGGER.debug("Waiting too long for data")
+                self.notify.read()
+
 
         except TionException as e:
             _LOGGER.error(str(e))
