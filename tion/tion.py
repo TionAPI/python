@@ -183,5 +183,7 @@ class tion:
             result = self._btle.writeCharacteristic(notify_handle, setup_data, withResponse=True)
             _LOGGER.debug("Result is %s", result)
             self._btle.withDelegate(self._delegation)
+            _LOGGER.debug("Final read")
             self.notify.read()
+            _LOGGER.debug("Enable notification finished")
             return result
