@@ -184,6 +184,11 @@ class tion:
             _LOGGER.debug("Result is %s", result)
             self._btle.withDelegate(self._delegation)
             _LOGGER.debug("Final read")
-            self.notify.read()
+            try:
+                self.notify.read()
+            except Exception as e:
+                _LOGGER.debug("Got %s exception while final read. It should be OK", str(e))
+                pass
+
             _LOGGER.debug("Enable notification finished")
             return result
