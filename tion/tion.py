@@ -1,5 +1,6 @@
 import abc
 import logging
+import time
 from typing import Callable
 
 from bluepy import btle
@@ -128,12 +129,17 @@ class tion:
             self._btle = btle.Peripheral(None)
 
         if connection_status == "disc":
-            self._btle.connect(self.mac, btle.ADDR_TYPE_RANDOM)
-            for tc in self._btle.getCharacteristics():
-                if tc.uuid == self.uuid_notify:
-                    self.notify = tc
-                if tc.uuid == self.uuid_write:
-                    self.write = tc
+            try:
+                self._btle.connect(self.mac, btle.ADDR_TYPE_RANDOM)
+                for tc in self._btle.getCharacteristics():
+                    if tc.uuid == self.uuid_notify:
+                        self.notify = tc
+                    if tc.uuid == self.uuid_write:
+                        self.write = tc
+            except btle.BTLEDisconnectError as e:
+                _LOGGER.warning("Got %s exception", str(e))
+                time.sleep(2)
+                raise e
 
     def _try_write(self, request: bytearray):
         if self.mac != "dummy":
