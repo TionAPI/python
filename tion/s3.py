@@ -108,9 +108,11 @@ class s3(tion):
                     i += 1
                 else:
                     _LOGGER.debug("Waiting too long for data")
+                    result = {"code": 400, "error": "Waiting too long for data"}
                     self.notify.read()
             except btle.BTLEDisconnectError as e:
                 _LOGGER.debug("Got %s while waiting for notification", str(e))
+                result = {"code": 400, "error": "Got exception " + str(e)}
                 self._disconnect()
 
         except TionException as e:
