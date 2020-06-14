@@ -112,23 +112,29 @@ class tion:
             status = 'unknown'
         return status
 
+    @property
+    def connection_status(self):
+        connection_status = "disc"
+        try:
+            connection_status = self._btle.getState()
+        except btle.BTLEInternalError as e:
+            if str(e) == "Helper not started (did you call connect()?)":
+                pass
+            else:
+                raise e
+        except btle.BTLEDisconnectError as e:
+            pass
+        except BrokenPipeError as e:
+            self._btle = btle.Peripheral(None)
+
+        return connection_status
+
     def _connect(self):
         if self.mac == "dummy":
             _LOGGER.info("Dummy connect")
             return
 
-        try:
-            connection_status = self._btle.getState()
-        except btle.BTLEInternalError as e:
-            if str(e) == "Helper not started (did you call connect()?)":
-                connection_status = "disc"
-            else:
-                raise e
-        except BrokenPipeError as e:
-            connection_status = "disc"
-            self._btle = btle.Peripheral(None)
-
-        if connection_status == "disc":
+        if self.connection_status == "disc":
             try:
                 self._btle.connect(self.mac, btle.ADDR_TYPE_RANDOM)
                 for tc in self._btle.getCharacteristics():
@@ -140,6 +146,11 @@ class tion:
                 _LOGGER.warning("Got %s exception", str(e))
                 time.sleep(2)
                 raise e
+
+    def _disconnect(self):
+        if self.connection_status != "disc":
+            if self.mac != "dummy":
+                self._btle.disconnect()
 
     def _try_write(self, request: bytearray):
         if self.mac != "dummy":

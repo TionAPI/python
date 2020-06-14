@@ -218,6 +218,4 @@ class Lite(tion):
         except TionException as e:
             _LOGGER.error(str(e))
         finally:
-            if not keep_connection:
-                if self.mac != "dummy":
-                    self._btle.disconnect()
+            self._disconnect()

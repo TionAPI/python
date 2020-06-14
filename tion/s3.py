@@ -99,23 +99,25 @@ class s3(tion):
             self._do_action(self._try_write, request=get_status_command())
 
             i = 0
-            while i < 10:
-                if self._btle.waitForNotifications(1.0):
-                    byte_response = self._delegation.data
-                    result = decode_response(byte_response)
-                    break
-                i += 1
-            else:
-                _LOGGER.debug("Waiting too long for data")
-                self.notify.read()
+            try:
+                while i < 10:
+                    if self._btle.waitForNotifications(1.0):
+                        byte_response = self._delegation.data
+                        result = decode_response(byte_response)
+                        break
+                    i += 1
+                else:
+                    _LOGGER.debug("Waiting too long for data")
+                    self.notify.read()
+            except btle.BTLEDisconnectError as e:
+                _LOGGER.debug("Got %s while waiting for notification", str(e))
+                self._disconnect()
 
         except TionException as e:
             _LOGGER.error(str(e))
             result = {"code": 400, "error": "Got exception " + str(e)}
         finally:
-            if not keep_connection:
-                if self.mac != "dummy":
-                    self._btle.disconnect()
+            self._disconnect()
 
         return result
 
@@ -148,6 +150,4 @@ class s3(tion):
         except TionException as e:
             _LOGGER.error(str(e))
         finally:
-            if not keep_connection:
-                if self.mac != "dummy":
-                    self._btle.disconnect()
+            self._disconnect()
