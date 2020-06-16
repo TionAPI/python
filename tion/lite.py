@@ -1,6 +1,7 @@
 import logging
 from bluepy import btle
 from abc import ABC
+from random import randrange
 
 if __package__ == "":
     from tion import tion, TionException
@@ -203,6 +204,7 @@ class Lite(tion):
                     while not self.collect_command(self.__try_get_state()):
                         pass
                     else:
+                        self._package_id = 0
                         break
                 else:
                     if self._btle.waitForNotifications(1.0):
@@ -219,3 +221,33 @@ class Lite(tion):
             _LOGGER.error(str(e))
         finally:
             self._disconnect()
+
+    @property
+    def random(self) -> bytes:
+        # return random hex number.
+        return randrange(0xFF)
+
+    @property
+    def random4(self) -> list:
+        # return 4 random hex.
+        return [self.random, self.random, self.random, self.random]
+
+    @property
+    def presets(self) -> list:
+        return [0x0a, 0x14, 0x19, 0x02, 0x04, 0x06]
+
+    def set(self, request: dict = {}):
+        def encode_request() -> bytearray:
+            fb = 0x07  # states
+            sb = 0x00  # ??
+            hb = 0x00  # heater?
+            tb = 0x02 if (hb > 0 or self._fan_speed > 0) else 0x01
+            lb = [ 0x60, 0x00 ] if sb == 0 else [0x00, 0x00]
+
+            return bytearray([0x00, 0x1e, 0x00, self.MAGIC_NUMBER, self.random] +
+                             self.SET_PARAMS + self.random4 + self.random4 + [
+                                 fb, sb, tb, hb, self._fan_speed] + self.presets +
+                             lb + [0x00] + self.CRC
+            )
+        self.get(keep_connection=True)
+        return encode_request()

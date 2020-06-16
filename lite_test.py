@@ -17,4 +17,6 @@ print("crc is: " + bytes(device._crc).hex())
 print("header._package_size = %s" % device._package_size)
 print("header_commad_type = %s" % bytes(device._command_type).hex())
 
+_LOGGER.debug("Will sent %s", bytes(device.set()).hex())
+
 
