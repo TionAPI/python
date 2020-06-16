@@ -45,6 +45,7 @@ class Lite(tion):
         self._fw_version: str = ""
         self._mac = mac
         self._got_new_sequence = False
+        self._fan_speed: int = 0
         if mac == "dummy":
             _LOGGER.info("Dummy mode!")
             self._package_id: int = 0
@@ -79,7 +80,7 @@ class Lite(tion):
 
             self._air_mode = data[2]
             self._heater_temp = data[3]
-            self._fan_speed = data[4]
+            self.fan_speed = data[4]
             self._in_temp = data[5]
             self._out_temp = data[6]
             self._electronic_temp = data[7]
@@ -104,7 +105,7 @@ class Lite(tion):
 
             _LOGGER.info("air mode %d", self._air_mode)
             _LOGGER.info("heater temperature is %d", self._heater_temp)
-            _LOGGER.info("fan sped is %d", self._fan_speed)
+            _LOGGER.info("fan sped is %d", self.fan_speed)
             _LOGGER.info("in temp is %d", self._in_temp)
             _LOGGER.info("out temp is %d", self._out_temp)
             _LOGGER.info("electronic temp is %d", self._electronic_temp)
@@ -236,17 +237,25 @@ class Lite(tion):
     def presets(self) -> list:
         return [0x0a, 0x14, 0x19, 0x02, 0x04, 0x06]
 
+    @property
+    def fan_speed(self):
+        return self._fan_speed
+
+    @fan_speed.setter
+    def fan_speed(self, new_speed):
+        self._fan_speed = new_speed
+
     def set(self, request: dict = {}):
         def encode_request() -> bytearray:
             fb = 0x07  # states
             sb = 0x00  # ??
             hb = 0x00  # heater?
-            tb = 0x02 if (hb > 0 or self._fan_speed > 0) else 0x01
+            tb = 0x02 if (hb > 0 or self.fan_speed > 0) else 0x01
             lb = [ 0x60, 0x00 ] if sb == 0 else [0x00, 0x00]
 
             return bytearray([0x00, 0x1e, 0x00, self.MAGIC_NUMBER, self.random] +
                              self.SET_PARAMS + self.random4 + self.random4 + [
-                                 fb, sb, tb, hb, self._fan_speed] + self.presets +
+                                 fb, sb, tb, hb, self.fan_speed] + self.presets +
                              lb + [0x00] + self.CRC
             )
 
