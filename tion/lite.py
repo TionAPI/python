@@ -249,5 +249,8 @@ class Lite(tion):
                                  fb, sb, tb, hb, self._fan_speed] + self.presets +
                              lb + [0x00] + self.CRC
             )
+
         self.get(keep_connection=True)
+        for key in request:
+            setattr(self, key, request[key])
         return encode_request()
