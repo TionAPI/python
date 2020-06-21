@@ -157,7 +157,7 @@ class tion:
             _LOGGER.debug("Writing %s to %s", bytes(request).hex(), self.write.uuid)
             return self.write.write(request)
         else:
-            _LOGGER.info("Dummy write")
+            _LOGGER.info("Dummy write %s", bytes(request).hex())
             return "dummy write"
 
     def _do_action(self, action: Callable, max_tries: int = 3, *args, **kwargs):
