@@ -323,7 +323,7 @@ class Lite(tion):
         for d in data_for_sent:
             self._do_action(self._try_write, request=d)
 
-    def set(self, request: dict = {}):
+    def set(self, request: dict = {}, need_update = True):
         def encode_request() -> bytearray:
             def encode_state():
                 result = self._state | (self._sound << 1) | (self._light << 2) | (self._heater << 4)
@@ -338,8 +338,9 @@ class Lite(tion):
                                  encode_state(), sb, tb, self.target_temp, self.fan_speed] + self.presets +
                              lb + [0x00] + self.CRC
             )
+        if need_update:
+            self.get(keep_connection=True)
 
-        self.get(keep_connection=True)
         for key in request:
             setattr(self, key, request[key])
 
