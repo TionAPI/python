@@ -26,8 +26,5 @@ _LOGGER.debug("Initial state: device is %s, light is %s, sound is %s, heater is 
               device.fan_speed,
               device.target_temp
               )
-_LOGGER.debug("For turn off device will sent %s", bytes(device.set({"state": "off"})).hex())
-_LOGGER.debug("For turn off light will sent %s", bytes(device.set({"light": "off"})).hex())
-_LOGGER.debug("For turn on device and fan_speed 6 will sent %s", bytes(device.set({"state": "on", "fan_speed": 6})).hex())
 
 
