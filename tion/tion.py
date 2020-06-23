@@ -44,6 +44,7 @@ class tion:
         self._mac = mac
         self._btle: btle.Peripheral = btle.Peripheral(None)
         self._delegation = TionDelegation()
+        self.have_breezer_state: bool = False
 
     @abc.abstractmethod
     def _send_request(self, request: bytearray) -> bytearray:
@@ -155,17 +156,19 @@ class tion:
     def _try_write(self, request: bytearray):
         if self.mac != "dummy":
             _LOGGER.debug("Writing %s to %s", bytes(request).hex(), self.write.uuid)
-            return self.write.write(request)
+            result = self.write.write(request)
         else:
             _LOGGER.info("Dummy write %s", bytes(request).hex())
-            return "dummy write"
+            result = "dummy write"
+        return result
 
     def _do_action(self, action: Callable, max_tries: int = 3, *args, **kwargs):
         tries: int = 0
+        last_exception: Exception = Exception(None)
         while tries < max_tries:
             _LOGGER.debug("Doing " + action.__name__ + ". Attempt " + str(tries + 1) + "/" + str(max_tries))
             try:
-                if action.__name__ != '_connect':
+                if action.__name__ != '_connect' and action.__name__ != 'get':
                     self._connect()
 
                 response = action(*args, **kwargs)
@@ -173,18 +176,21 @@ class tion:
             except Exception as e:
                 tries += 1
                 _LOGGER.warning("Got exception while " + action.__name__ + ": " + str(e))
+                last_exception = e
                 pass
         else:
             if action.__name__ == '_connect':
                 message = "Could not connect to " + self.mac
-            elif action.__name__ == '__try_write':
+            elif action.__name__ == '_try_write':
                 message = "Could not write request + " + kwargs['request'].hex()
+            elif action.__name__ == 'get':
+                message = "Could not perform get request"
             elif action.__name__ == '__try_get_state':
                 message = "Could not get updated state"
             else:
                 message = "Could not do " + action.__name__
-
-            raise TionException(action.__name__, message)
+            _LOGGER.critical("Will raise exception from %s: %s", action.__name__, message)
+            raise last_exception
 
         return response
 

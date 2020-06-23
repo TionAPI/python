@@ -13,6 +13,7 @@ except IndexError:
 device = Lite(mac)
 
 _LOGGER.debug("Getting device state")
+device.set({"fan_speed": 1}, need_update=False)
 device.get()
 initial_fan_speed = device.fan_speed
 initial_state = device.state

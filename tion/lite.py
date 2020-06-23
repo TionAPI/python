@@ -214,17 +214,19 @@ class Lite(tion):
                         pass
                     else:
                         self._package_id = 0
+                        self.have_breezer_state = True
                         break
                 else:
                     if self._btle.waitForNotifications(1.0):
                         byte_response = self._delegation.data
                         if self.collect_command(byte_response):
+                            self.have_breezer_state = True
                             break
+                        i = 0
                     i += 1
             else:
                 _LOGGER.debug("Waiting too long for data")
                 self.notify.read()
-
 
         except TionException as e:
             _LOGGER.error(str(e))
@@ -321,9 +323,10 @@ class Lite(tion):
                     data_for_sent[i].insert(0, self.MIDDLE_PACKET_ID)
 
         for d in data_for_sent:
+            _LOGGER.debug("Doing _try_write with request=%s", bytes(d).hex())
             self._do_action(self._try_write, request=d)
 
-    def set(self, request: dict = {}, need_update = True):
+    def set(self, request: dict = {}, need_update=True):
         def encode_request() -> bytearray:
             def encode_state():
                 result = self._state | (self._sound << 1) | (self._light << 2) | (self._heater << 4)
@@ -333,18 +336,28 @@ class Lite(tion):
             tb = 0x02 if (self.target_temp > 0 or self.fan_speed > 0) else 0x01
             lb = [0x60, 0x00] if sb == 0 else [0x00, 0x00]
 
-            return bytearray([0x00, 0x1e, 0x00, self.MAGIC_NUMBER, self.random] +
-                             self.SET_PARAMS + self.random4 + self.random4 + [
-                                 encode_state(), sb, tb, self.target_temp, self.fan_speed] + self.presets +
-                             lb + [0x00] + self.CRC
+            return bytearray(
+                [0x00, 0x1e, 0x00, self.MAGIC_NUMBER, self.random] +
+                self.SET_PARAMS + self.random4 + self.random4 +
+                [encode_state(), sb, tb, self.target_temp, self.fan_speed] +
+                self.presets + lb + [0x00] + self.CRC
             )
+        if not self.have_breezer_state and not need_update:
+            _LOGGER.warning("Have no initial breezer state. Will run force update")
+            need_update = True
+
         if need_update:
-            self.get(keep_connection=True)
+            self._do_action(self.get, keep_connection=True)
+
+        if not self.have_breezer_state:
+            _LOGGER.critical("Have no breezer state after get. Something went wrong!")
+            raise RuntimeError("Have no breezer state after get.")
 
         for key in request:
             setattr(self, key, request[key])
 
         encoded_request = encode_request()
+        _LOGGER.debug("Will write %s", encoded_request)
         self._send_data(encoded_request)
         return encoded_request
 
